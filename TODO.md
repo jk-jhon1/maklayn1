@@ -18,3 +18,6 @@
 - [x] Operação “Montar projeto” para gerar arquitetura, árvore de arquivos, implementação inicial, testes, configuração e instruções reproduzíveis a partir de um prompt.
 - [ ] Adicionar parsers dedicados para PDF, DOCX, XLSX, imagens, áudio e formatos binários específicos.
 - [ ] Conectar executor sandbox isolado para compilar e executar testes reais com limites de CPU, memória, tempo e rede.
+
+- [x] Permitir escrever Markdown no editor, anexar documentos e ZIPs na sessão e exportar PDF ou `maklayn-project.zip` com código, README, análise e anexos.
+- [ ] Persistir anexos em storage privado para reabrir o projeto em outro dispositivo.

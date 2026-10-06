@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
+import { CodeLab } from "@/components/CodeLab";
 import { Streamdown } from "streamdown";
 import {
   ArrowUpRight,
@@ -149,6 +150,7 @@ function App() {
   ]);
   const [savedSources, setSavedSources] = useState(sourceCards.slice(0, 2));
   const chatMutation = trpc.ai.chat.useMutation();
+  const codeMutation = trpc.ai.codeAssist.useMutation();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -255,7 +257,7 @@ function App() {
           {active === "chat" && <ChatView messages={messages} onSend={sendMessage} isLoading={chatMutation.isPending} onAction={sendMessage} />}
           {active === "pesquisa" && <ResearchView savedSources={savedSources} onSave={source => { setSavedSources(prev => prev.some(item => item.title === source.title) ? prev : [...prev, source]); toast.success("Fonte salva", { description: source.title }); }} />}
           {active === "arena" && <ArenaView />}
-          {active === "codigo" && <CodeView />}
+          {active === "codigo" && <CodeLab onAssist={input => codeMutation.mutateAsync(input).then(response => response.content)} isLoading={codeMutation.isPending} />}
           {active === "enem" && <EnemView onOpenChat={() => openModule("chat")} />}
           {active === "projetos" && <ProjectsView projects={projects} onCreate={createProject} onDelete={id => { setProjects(prev => prev.filter(project => project.id !== id)); toast.success("Projeto removido"); }} />}
         </div>
@@ -314,14 +316,6 @@ function ArenaView() {
 
 function ModelCard({ label, tone, text }: { label: string; tone: string; text: string }) {
   return <article className={`model-card ${tone}`}><div className="model-card-head"><span className="model-label"><i /> {label}</span><button className="icon-button" aria-label="Mais opções"><MoreHorizontal size={17} /></button></div><div className="model-response"><p>{text}</p></div><div className="model-card-foot"><span><ShieldCheck size={13} /> Sem citações nesta resposta</span><button className="text-button">Copiar <Copy size={13} /></button></div></article>;
-}
-
-function CodeView() {
-  const [code, setCode] = useState(`type Source = {\n  title: string;\n  url: string;\n  trust: number;\n};\n\nexport function rankSources(sources: Source[]) {\n  return sources\n    .filter(source => source.url.startsWith("https://"))\n    .sort((a, b) => b.trust - a.trust);\n}`);
-  const [activeTab, setActiveTab] = useState("rankSources.ts");
-  const [analysis, setAnalysis] = useState(false);
-  const tabs = ["rankSources.ts", "sources.test.ts", "README.md"];
-  return <div className="code-view"><PageIntro eyebrow="ESTAÇÃO DE CÓDIGO" title="Construa sem perder a segurança." description="Um espaço para experimentar, testar e documentar. O terminal do MVP é simulado: nenhum código não confiável roda no servidor principal." action={<div className="sandbox-badge"><TerminalSquare size={15} /> Sandbox isolado · em breve</div>} /><div className="code-workspace"><aside className="file-tree"><div className="tree-heading"><span>ARQUIVOS</span><button className="icon-button" aria-label="Novo arquivo"><Plus size={15} /></button></div><div className="tree-project"><ChevronDown size={14} /> maklayn-lab</div><div className="tree-folder"><ChevronDown size={13} /> src</div><button className="tree-file active"><FileCode2 size={14} /> rankSources.ts</button><button className="tree-file"><FileCode2 size={14} /> sources.test.ts</button><button className="tree-file"><FileText size={14} /> README.md</button><div className="tree-folder collapsed"><ChevronDown size={13} /> docs</div><div className="tree-status"><span className="status-pulse" /> Nenhum segredo detectado</div></aside><section className="editor-shell"><div className="editor-tabs">{tabs.map(tab => <button key={tab} className={activeTab === tab ? "active" : ""} onClick={() => setActiveTab(tab)}>{tab}{tab === "rankSources.ts" && <X size={12} />}</button>)}<button className="icon-button" aria-label="Nova aba"><Plus size={14} /></button></div><div className="editor-toolbar"><span>TypeScript</span><div><button className="tool-button" onClick={() => { navigator.clipboard?.writeText(code); toast.success("Código copiado"); }}><Copy size={14} /> Copiar</button><button className={`tool-button ${analysis ? "active" : ""}`} onClick={() => { setAnalysis(true); toast.success("Análise concluída", { description: "Nenhum alerta crítico encontrado neste trecho." }); }}><ShieldCheck size={14} /> Analisar</button><button className="tool-button" onClick={() => toast("Test runner simulado", { description: "2 testes preparados · execução isolada entra na fase 2." })}><Check size={14} /> Testar</button></div></div><div className="editor-area"><div className="line-numbers">{code.split("\n").map((_, index) => <span key={index}>{String(index + 1).padStart(2, "0")}</span>)}</div><textarea value={code} onChange={event => setCode(event.target.value)} spellCheck={false} aria-label="Editor de código" /></div><div className="terminal-panel"><div className="terminal-head"><span><TerminalSquare size={14} /> TERMINAL SIMULADO</span><span className="terminal-online"><i /> pronto</span></div><div className="terminal-output"><p><span className="terminal-prompt">$</span> maklayn check --security</p><p className="terminal-success"><Check size={13} /> 0 alertas críticos · 2 observações</p><p className="terminal-muted">A execução real será feita em sandbox isolado na fase 2.</p></div></div></section><aside className="code-inspector"><div className="inspector-tabs"><button className="active">Problemas <span>0</span></button><button>Diferenças</button></div><div className="inspector-card"><div className="inspector-icon success"><ShieldCheck size={18} /></div><div><strong>Trecho seguro para revisar</strong><p>{analysis ? "Análise concluída: links filtrados por HTTPS e nenhum segredo exposto." : "Execute a análise para verificar segredos, XSS, SQL injection e comandos perigosos."}</p></div></div><div className="inspector-card suggestion"><div className="inspector-icon"><Lightbulb size={18} /></div><div><strong>Próximo passo</strong><p>Adicione um teste para a lista vazia e para URLs inválidas.</p><button className="text-button" onClick={() => setCode(prev => `${prev}\n\n// TODO: cobrir caso sem fontes`)}>Adicionar TODO <ArrowUpRight size={13} /></button></div></div></aside></div></div>;
 }
 
 function EnemView({ onOpenChat }: { onOpenChat: () => void }) {

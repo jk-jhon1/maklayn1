@@ -3,7 +3,7 @@
 - [ ] Dashboard responsivo da Maklayn com nova conversa, pesquisa, programação, ENEM, projetos recentes e referências salvas.
 - [ ] Chat inteligente com histórico local, título, Markdown, ações de explicar melhor, resumir, mostrar etapas, verificar fontes, transformar em plano de estudo e salvar como projeto.
 - [ ] Arena de modelos com comparação lado a lado entre Modelo A e Modelo B, critérios de precisão, clareza, completude, segurança, fontes e adequação, além de avaliação humana com nota e comentário.
-- [ ] Estação de programação com editor visual, abas, árvore de arquivos, terminal simulado, diferenças, suporte visual às linguagens Python, JavaScript/TypeScript, HTML, CSS, SQL, Java, C++, Go e Rust, geração de código/testes/documentação e alertas de segurança.
+- [x] Estação de programação com editor visual, abas, árvore de arquivos, terminal simulado, suporte a TypeScript, JavaScript, Python, SQL, Go, Rust, Java e C++, além do copiloto backend para gerar, revisar, explicar, criar testes e auditar segurança sem executar código arbitrário.
 - [ ] Modo Pesquisa com referências rastreáveis, links clicáveis, instituição/autor, data de acesso e aviso quando a fonte não foi acessada ou verificada.
 - [ ] Centro ENEM com trilhas de Linguagens, Ciências Humanas, Ciências da Natureza, Matemática e Redação; questões de treino; gabarito comentado; feedback pedagógico; análise por competências; plano de estudos; nenhuma promessa de nota oficial.
 - [ ] Projetos e referências com salvar, favoritar, marcar, copiar e excluir no protótipo, com confirmação para ações destrutivas.

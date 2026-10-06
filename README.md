@@ -4,7 +4,7 @@ A Maklayn é uma bancada digital para estudar, pesquisar e construir com mais cr
 
 ## O que está pronto
 
-O produto inclui dashboard responsivo, chat inteligente com integração backend/fallback transparente, modo Pesquisa com referências demonstrativas rastreáveis, Arena de comparação entre modelos, estação de Código com editor e terminal explicitamente simulado, Centro ENEM com trilhas e laboratório de redação, Projetos locais e referências salvas. Também há modo claro/escuro, navegação responsiva, feedbacks de estado, manifesto de rotas e health check.
+O produto inclui dashboard responsivo, chat inteligente com integração backend/fallback transparente, modo Pesquisa com referências demonstrativas rastreáveis, Arena de comparação entre modelos, estação de Código com copiloto real para gerar, revisar, explicar, testar e auditar segurança em TypeScript, JavaScript, Python, SQL, Go, Rust, Java e C++, Centro ENEM com trilhas e laboratório de redação, Projetos locais e referências salvas. Também há modo claro/escuro, navegação responsiva, feedbacks de estado, manifesto de rotas e health check.
 
 Quando o LLM não estiver disponível na sessão, o chat entra em modo demonstração e deixa isso explícito. Ele não fabrica citações, links ou respostas apresentadas como verificadas.
 
@@ -34,7 +34,7 @@ O projeto preserva o fluxo Manus OAuth do starter, incluindo o cookie `webdev_ap
 
 ## LLM
 
-O procedimento `ai.chat` chama `invokeLLM` no servidor com o contexto Maklayn. O frontend envia somente mensagens e recebe o texto da resposta. Se o serviço falhar, o cliente apresenta uma resposta demonstrativa explícita. Limites, retry e credenciais permanecem no contrato oficial do runtime.
+Os procedimentos `ai.chat` e `ai.codeAssist` chamam `invokeLLM` no servidor com o contexto Maklayn. O frontend envia somente mensagens ou o arquivo em edição e recebe o texto da resposta. O copiloto de código não executa comandos, instala dependências, acessa a rede ou recebe segredos. Se o serviço falhar, o cliente apresenta uma resposta demonstrativa explícita. Limites, retry e credenciais permanecem no contrato oficial do runtime.
 
 ## Segurança e limites do MVP
 

@@ -10,6 +10,15 @@ const chatMessageSchema = z.object({
   content: z.string().min(1).max(12000),
 });
 
+const codeOperationSchema = z.enum(["generate", "review", "tests", "explain", "security"]);
+const codeAssistSchema = z.object({
+  operation: codeOperationSchema,
+  language: z.string().min(1).max(64),
+  task: z.string().min(1).max(4000),
+  code: z.string().max(30000),
+  fileName: z.string().min(1).max(160),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -34,6 +43,32 @@ export const appRouter = router({
             ...input.messages,
           ],
           maxTokens: 900,
+        });
+        const content = result.choices?.[0]?.message?.content;
+        return { content: typeof content === "string" ? content : "" };
+      }),
+    codeAssist: publicProcedure
+      .input(codeAssistSchema)
+      .mutation(async ({ input }) => {
+        const operationInstructions: Record<z.infer<typeof codeOperationSchema>, string> = {
+          generate: "Gere uma implementação completa. Entregue primeiro um bloco de código executável e depois explique decisões, dependências e limites.",
+          review: "Faça uma revisão técnica priorizando bugs, comportamento de borda, legibilidade, desempenho, tipagem e manutenção. Não altere o código silenciosamente.",
+          tests: "Crie testes unitários e casos de borda. Informe framework assumido e o que ainda precisa ser executado em um ambiente isolado.",
+          explain: "Explique o código em camadas: visão geral, fluxo linha a linha, entradas e saídas, riscos e uma sugestão de melhoria para iniciante.",
+          security: "Faça uma auditoria defensiva. Procure segredos expostos, injection, XSS, SSRF, traversal, comandos perigosos, dependências implícitas e validação ausente. Não ensine exploração; entregue correções seguras.",
+        };
+        const result = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `Você é o copiloto de engenharia da Maklayn. Responda em português do Brasil e seja tecnicamente preciso. A operação solicitada é: ${input.operation}. ${operationInstructions[input.operation]} Nunca execute código, nunca peça segredos, nunca revele tokens e não forneça malware, roubo de credenciais, exploração de vulnerabilidades, evasão de controles ou instruções para dano. Quando o pedido for perigoso, redirecione para hardening, teste seguro ou análise defensiva. Use Markdown e blocos de código com a linguagem correta. Se algo depender de execução, compilação, rede ou dependência externa, diga que é necessário validar em sandbox isolado.`,
+            },
+            {
+              role: "user",
+              content: `Arquivo: ${input.fileName}\nLinguagem: ${input.language}\nPedido: ${input.task}\n\nCódigo fornecido:\n\`\`\`${input.language}\n${input.code}\n\`\`\``,
+            },
+          ],
+          maxTokens: 1800,
         });
         const content = result.choices?.[0]?.message?.content;
         return { content: typeof content === "string" ? content : "" };

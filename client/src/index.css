@@ -207,3 +207,4 @@ a { color: inherit; text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
 @media (max-width: 760px) { .code-assist-bar { grid-template-columns: 1fr; }.code-controls { align-items: stretch; flex-wrap: wrap; }.code-controls label { flex: 1; min-width: 110px; }.code-controls .primary-small { width: 100%; } }
+.dual-agent-badge { display: inline-block; margin-left: 5px; padding: 3px 6px; border: 1px solid color-mix(in srgb, var(--mk-coral) 38%, var(--mk-line)); border-radius: 999px; color: var(--mk-coral); background: var(--mk-surface); font-family: var(--mk-mono); font-size: 8px; font-style: normal; font-weight: 750; letter-spacing: .2px; vertical-align: middle; }

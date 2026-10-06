@@ -42,7 +42,7 @@ export const appRouter = router({
             },
             ...input.messages,
           ],
-          maxTokens: 900,
+          maxTokens: 3600,
         });
         const content = result.choices?.[0]?.message?.content;
         return { content: typeof content === "string" ? content : "" };
@@ -57,21 +57,40 @@ export const appRouter = router({
           explain: "Explique o código em camadas: visão geral, fluxo linha a linha, entradas e saídas, riscos e uma sugestão de melhoria para iniciante.",
           security: "Faça uma auditoria defensiva. Procure segredos expostos, injection, XSS, SSRF, traversal, comandos perigosos, dependências implícitas e validação ausente. Não ensine exploração; entregue correções seguras.",
         };
-        const result = await invokeLLM({
-          messages: [
-            {
-              role: "system",
-              content: `Você é o copiloto de engenharia da Maklayn. Responda em português do Brasil e seja tecnicamente preciso. A operação solicitada é: ${input.operation}. ${operationInstructions[input.operation]} Nunca execute código, nunca peça segredos, nunca revele tokens e não forneça malware, roubo de credenciais, exploração de vulnerabilidades, evasão de controles ou instruções para dano. Quando o pedido for perigoso, redirecione para hardening, teste seguro ou análise defensiva. Use Markdown e blocos de código com a linguagem correta. Se algo depender de execução, compilação, rede ou dependência externa, diga que é necessário validar em sandbox isolado.`,
-            },
-            {
-              role: "user",
-              content: `Arquivo: ${input.fileName}\nLinguagem: ${input.language}\nPedido: ${input.task}\n\nCódigo fornecido:\n\`\`\`${input.language}\n${input.code}\n\`\`\``,
-            },
-          ],
-          maxTokens: 1800,
-        });
-        const content = result.choices?.[0]?.message?.content;
-        return { content: typeof content === "string" ? content : "" };
+        const userContext = `Arquivo: ${input.fileName}\nLinguagem: ${input.language}\nPedido: ${input.task}\n\nCódigo fornecido:\n\`\`\`${input.language}\n${input.code}\n\`\`\``;
+        const sharedSafety = "Nunca execute código, nunca peça segredos, nunca revele tokens e não forneça malware, roubo de credenciais, exploração de vulnerabilidades, evasão de controles ou instruções para dano. Quando o pedido for perigoso, redirecione para hardening, teste seguro ou análise defensiva. Use Markdown e blocos de código com a linguagem correta. Se algo depender de execução, compilação, rede ou dependência externa, diga que é necessário validar em sandbox isolado.";
+        const [builder, verifier] = await Promise.all([
+          invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `Você é o Agente 1 — Engenheiro implementador da Maklayn. Responda em português do Brasil e seja tecnicamente preciso. A operação solicitada é: ${input.operation}. ${operationInstructions[input.operation]} Trabalhe com profundidade suficiente para não omitir dependências, tipos, tratamento de erros e casos de borda. ${sharedSafety}`,
+              },
+              { role: "user", content: userContext },
+            ],
+            maxTokens: input.operation === "generate" || input.operation === "tests" ? 5000 : 3600,
+          }),
+          invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `Você é o Agente 2 — Revisor independente e testador da Maklayn. Responda em português do Brasil. Analise o mesmo pedido e código sem confiar no Agente 1. Liste bugs prováveis, requisitos ausentes, regressões, casos de borda e testes que devem passar antes da entrega; quando possível, proponha uma correção concreta ou um teste reproduzível. Não diga que executou algo que não executou. ${sharedSafety}`,
+              },
+              { role: "user", content: userContext },
+            ],
+            maxTokens: input.operation === "generate" || input.operation === "tests" ? 4200 : 3200,
+          }),
+        ]);
+        const builderContent = builder.choices?.[0]?.message?.content;
+        const verifierContent = verifier.choices?.[0]?.message?.content;
+        const content = [
+          "## Agente 1 — Implementação / análise principal",
+          typeof builderContent === "string" ? builderContent : "Sem resposta do agente principal.",
+          "",
+          "## Agente 2 — Revisão independente / testes antes da entrega",
+          typeof verifierContent === "string" ? verifierContent : "Sem resposta do agente revisor.",
+        ].join("\n");
+        return { content, agents: 2, adaptiveBudget: true };
       }),
   }),
 });

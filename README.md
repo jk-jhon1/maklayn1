@@ -34,7 +34,7 @@ O projeto preserva o fluxo Manus OAuth do starter, incluindo o cookie `webdev_ap
 
 ## LLM
 
-Os procedimentos `ai.chat` e `ai.codeAssist` chamam `invokeLLM` no servidor com o contexto Maklayn. O frontend envia somente mensagens ou o arquivo em edição e recebe o texto da resposta. O copiloto de código não executa comandos, instala dependências, acessa a rede ou recebe segredos. Se o serviço falhar, o cliente apresenta uma resposta demonstrativa explícita. Limites, retry e credenciais permanecem no contrato oficial do runtime.
+Os procedimentos `ai.chat` e `ai.codeAssist` chamam `invokeLLM` no servidor com o contexto Maklayn. O frontend envia somente mensagens ou o arquivo em edição e recebe o texto da resposta. O chat e o copiloto usam orçamento adaptativo dentro dos limites do modelo, em vez de um corte curto fixo. O copiloto de código consulta dois agentes simultaneamente: um implementador e um revisor/testador independente. A resposta reúne a implementação, bugs prováveis, casos de borda e testes sugeridos antes da entrega. Ele não executa comandos, instala dependências, acessa a rede ou recebe segredos. Se o serviço falhar, o cliente apresenta uma resposta demonstrativa explícita.
 
 ## Segurança e limites do MVP
 

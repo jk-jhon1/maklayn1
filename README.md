@@ -8,6 +8,10 @@ O produto inclui dashboard responsivo, chat inteligente com integração backend
 
 Quando o LLM não estiver disponível na sessão, o chat entra em modo demonstração e deixa isso explícito. Ele não fabrica citações, links ou respostas apresentadas como verificadas.
 
+## Cobertura e uso responsável
+
+A Maklayn foi configurada para responder com flexibilidade a pedidos permitidos, inclusive temas sensíveis e adultos em contexto informativo, educacional, criativo ou de relacionamento. Ela não é um modo “sem limites”: mantém proteções contra instruções para violência, crimes, exploração, abuso sexual, sexualização de menores, malware, fraude, invasão, fabricação de armas e outras formas de dano. Quando um pedido mistura uma parte legítima com uma parte perigosa, a resposta deve preservar a parte legítima e oferecer uma alternativa segura, sem inventar informações ou fazer sermão.
+
 ## Rodando localmente no ambiente WebDev
 
 ```bash

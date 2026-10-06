@@ -151,6 +151,7 @@ function App() {
   const [savedSources, setSavedSources] = useState(sourceCards.slice(0, 2));
   const chatMutation = trpc.ai.chat.useMutation();
   const codeMutation = trpc.ai.codeAssist.useMutation();
+  const fileChunkMutation = trpc.ai.analyzeFileChunk.useMutation();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -257,7 +258,7 @@ function App() {
           {active === "chat" && <ChatView messages={messages} onSend={sendMessage} isLoading={chatMutation.isPending} onAction={sendMessage} />}
           {active === "pesquisa" && <ResearchView savedSources={savedSources} onSave={source => { setSavedSources(prev => prev.some(item => item.title === source.title) ? prev : [...prev, source]); toast.success("Fonte salva", { description: source.title }); }} />}
           {active === "arena" && <ArenaView />}
-          {active === "codigo" && <CodeLab onAssist={input => codeMutation.mutateAsync(input).then(response => response.content)} isLoading={codeMutation.isPending} />}
+          {active === "codigo" && <CodeLab onAssist={input => codeMutation.mutateAsync(input).then(response => response.content)} onAnalyzeChunk={input => fileChunkMutation.mutateAsync(input).then(response => response.summary)} isLoading={codeMutation.isPending || fileChunkMutation.isPending} />}
           {active === "enem" && <EnemView onOpenChat={() => openModule("chat")} />}
           {active === "projetos" && <ProjectsView projects={projects} onCreate={createProject} onDelete={id => { setProjects(prev => prev.filter(project => project.id !== id)); toast.success("Projeto removido"); }} />}
         </div>

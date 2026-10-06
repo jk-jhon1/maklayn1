@@ -12,3 +12,9 @@
 - [ ] Interface com modo claro/escuro, navegação por teclado, estados de carregamento/erro/vazio/sucesso e meta WCAG 2.2 AA.
 - [ ] Manifesto `manus-routes.json`, endpoint `/api/health`, `.env.example` e README com execução, configuração, segurança, limitações e próximos passos.
 - [ ] Testes de tipos e build passando antes do checkpoint; nenhum código arbitrário executado no servidor principal.
+
+- [x] Análise incremental de textos e código grandes, com resumo acumulado por parte e revisão simultânea por dois agentes.
+- [x] Importação de ZIP no CodeLab, expansão por entrada e identificação explícita de binários sem tentar interpretá-los como texto.
+- [x] Operação “Montar projeto” para gerar arquitetura, árvore de arquivos, implementação inicial, testes, configuração e instruções reproduzíveis a partir de um prompt.
+- [ ] Adicionar parsers dedicados para PDF, DOCX, XLSX, imagens, áudio e formatos binários específicos.
+- [ ] Conectar executor sandbox isolado para compilar e executar testes reais com limites de CPU, memória, tempo e rede.

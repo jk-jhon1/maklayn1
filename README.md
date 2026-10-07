@@ -1,4 +1,4 @@
-# Maklayn — IA educacional e de pesquisa
+# Maklayn — IA educacional e de pesquisa.
 
 A Maklayn é uma bancada digital para estudar, pesquisar e construir com mais critério. Este repositório contém o MVP funcional em React + Vite + Express + tRPC + Drizzle, preparado para usar o Manus OAuth e o LLM gerenciado da plataforma.
 

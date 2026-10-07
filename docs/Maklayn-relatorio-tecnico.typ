@@ -323,3 +323,356 @@ A data de início 12/09/2026 é a data informada pelo criador neste relatório. 
 A Maklayn foi feita para ser uma estação de trabalho de IA, não apenas um chat. Sua arquitetura separa a interface, o servidor, a validação, o LLM, a autenticação e a futura persistência. O resultado atual é um MVP funcional e extensível: já demonstra os principais fluxos de estudo, pesquisa, programação, documentos e exportação, enquanto mantém declaradas as fronteiras que ainda exigem infraestrutura de produção.
 
 O criador registrado neste documento é *Jhon Maklayn Mozer dos Santos*. A data oficial de início informada é *12/09/2026*.
+
+#pagebreak()
+= Anexo A — Contratos de entrada e saída
+
+A interface entre navegador e servidor é deliberadamente tipada. O frontend não envia um objeto livre esperando que o backend descubra sua intenção; cada operação recebe campos conhecidos, que podem ser validados antes da chamada ao modelo. Essa decisão reduz falhas silenciosas e facilita a evolução da API.
+
+== Chat
+
+O contrato conceitual do chat pode ser representado assim:
+
+```text
+ChatInput {
+  messages: Message[]
+}
+Message {
+  role: "user" | "assistant" | "system"
+  content: string
+}
+ChatOutput {
+  content: string
+  demo?: boolean
+}
+```
+
+A validação deve rejeitar mensagens sem conteúdo, papéis desconhecidos e estruturas que não correspondam ao formato esperado. O backend é a autoridade para acrescentar as instruções de sistema, definir o modelo e controlar limites de contexto. O cliente não tem permissão para escolher credenciais ou alterar a política de segurança do servidor.
+
+== Assistência de código
+
+```text
+CodeAssistInput {
+  operation: "generate" | "review" | "test" | "explain" |
+             "security" | "project"
+  language: string
+  brief: string
+  code: string
+  fileName?: string
+}
+CodeAssistOutput {
+  results: AgentResult[]
+  mode: "dual-agent"
+}
+AgentResult {
+  agent: "implementer" | "reviewer"
+  content: string
+}
+```
+
+Esse desenho é importante porque separa a intenção do usuário do texto gerado. Uma futura versão pode substituir `string` por estruturas como `files`, `patches`, `commands`, `tests` e `warnings`, sem quebrar a ideia central da operação.
+
+= Anexo B — Ciclo de uma requisição
+
+Uma requisição do chat ou do CodeLab percorre várias camadas. O primeiro passo é a interação do usuário: o texto é capturado por um formulário React, o estado de carregamento é ativado e o botão é desabilitado para evitar envios duplicados. Em seguida, o cliente tRPC serializa o input e envia uma requisição HTTP para o servidor.
+
+No servidor, o contexto tRPC identifica a sessão disponível e encaminha a chamada para o router. O procedimento valida o input, seleciona a operação e prepara o prompt. Em pedidos de código, o prompt inclui linguagem, arquivo, objetivo, restrições de segurança e instrução para diferenciar código pronto de sugestão.
+
+A chamada ao LLM ocorre no backend, onde as credenciais gerenciadas estão disponíveis. O retorno é normalizado para uma resposta textual. No modo dual-agent, duas promessas são executadas em paralelo com `Promise.all`, reduzindo o tempo total em comparação com duas chamadas sequenciais. Se uma chamada falha, o sistema deve preservar o resultado da outra e registrar a falha como revisão incompleta, em vez de fingir que houve consenso.
+
+No navegador, a mutation encerra o estado de carregamento, adiciona o resultado à interface e mostra um toast de sucesso ou erro. O usuário pode copiar o texto, continuar a conversa, salvar o material ou exportá-lo. Esse ciclo mantém uma fronteira clara: a Maklayn pode gerar e revisar, mas não afirma que compilou ou executou algo quando não houve executor real.
+
+== Estados de interface
+
+#table(
+  columns: (1.5fr, 3fr, 2.5fr),
+  inset: 6pt,
+  stroke: 0.4pt + luma(190),
+  table.header([Estado], [Comportamento], [Por que existe]),
+  [idle], [Campos disponíveis e ação pronta.], [Experiência imediata.],
+  [loading], [Indicador de pensamento e ação desabilitada.], [Evita duplicação.],
+  [success], [Resposta renderizada e ações secundárias.], [Continuidade do trabalho.],
+  [error], [Mensagem clara e possibilidade de tentar novamente.], [Recuperação sem perder contexto.],
+  [demo], [Aviso explícito de que o LLM não respondeu.], [Honestidade operacional.],
+)
+
+#pagebreak()
+= Anexo C — Como o copiloto de código raciocina
+
+O copiloto foi projetado como uma etapa de engenharia assistida, não como um gerador cego de snippets. Cada solicitação começa com um briefing. O briefing precisa declarar o resultado esperado, o ambiente, a linguagem, os arquivos envolvidos e as restrições. Quanto mais concreto o contexto, maior a chance de a resposta ser funcional.
+
+== Agente implementador
+
+O implementador é instruído a produzir uma solução executável em princípio, com imports, tipos, tratamento de erro e integração coerentes. Ele deve evitar pseudocódigo quando o usuário pediu código, indicar arquivos alterados e incluir comandos de uso. Quando o pedido é um projeto inteiro, o resultado deve começar pela arquitetura e depois descer para os arquivos mais importantes.
+
+== Agente revisor
+
+O revisor recebe o mesmo objetivo e a mesma base. Ele procura variáveis não definidas, imports inexistentes, tipos incompatíveis, caminhos errados, condições de corrida, validação ausente, problemas de autenticação, exposição de segredos, entradas não confiáveis e casos de borda. A revisão deve diferenciar bug comprovável de hipótese de risco.
+
+== Testes antes da entrega
+
+Como o MVP não executa código arbitrário, a etapa de teste é uma revisão estática e uma sugestão de testes. O agente pode escrever casos unitários, testes de integração, comandos de lint e cenários manuais. A UI apresenta esse material como recomendação. Uma futura sandbox precisa pegar a saída, criar um workspace temporário, instalar apenas dependências permitidas, limitar recursos e executar os testes em ambiente isolado.
+
+== Exemplo de checklist técnico
+
+- o código compila com a versão declarada da linguagem?
+- todas as funções chamadas existem?
+- os tipos de entrada e saída são coerentes?
+- erros de rede, arquivo e autenticação são tratados?
+- entradas do usuário são validadas?
+- segredos aparecem no código ou nos logs?
+- testes cobrem caminho feliz e falhas previsíveis?
+- a solução depende de uma versão ou serviço não informado?
+- a resposta deixou claro o que foi apenas sugerido?
+
+#pagebreak()
+= Anexo D — Análise incremental de arquivos
+
+O navegador não deve enviar um arquivo de centenas de megabytes inteiro para uma única chamada de modelo. A estratégia implementada é incremental: primeiro o arquivo é identificado, depois é lido em partes, cada parte recebe um resumo local e o resumo acumulado é usado como contexto para a próxima parte.
+
+== Pseudofluxo
+
+```text
+arquivo selecionado
+  ├─ ZIP? ── sim ──> listar entradas
+  │                    ├─ texto/código ──> chunks
+  │                    └─ binário ───────> preservar metadados
+  └─ não ──> texto/código? ──> chunks ou preservação
+
+para cada chunk:
+  enviar {nome, extensão, índice, total, conteúdo, resumoAnterior}
+  receber {resumo, riscos, símbolos, perguntas}
+  acumular resumo
+
+resultado:
+  mapa de arquivos + visão geral + riscos + próximos passos
+```
+
+A separação entre `chunkIndex`, `totalChunks` e `summary` permite que o modelo saiba se está no começo, no meio ou no fim. Ela também torna possível mostrar progresso no CodeLab. O sistema não promete tamanho infinito: memória do navegador, limite HTTP, orçamento do modelo, tempo de processamento e tamanho do ZIP continuam sendo limites físicos.
+
+== Binários
+
+Um PDF, DOCX, XLSX, imagem, áudio ou vídeo não deve ser convertido em texto por tentativa ingênua. Sem parser, o comportamento correto é preservar nome, tamanho, MIME type e bytes para exportação, informando que a análise semântica depende de um extrator. Essa distinção evita respostas inventadas a partir de bytes ilegíveis.
+
+== Segurança do upload
+
+A versão de produção deve aplicar limites de tamanho, quantidade de arquivos, profundidade de ZIP, número de entradas e razão de expansão. Deve bloquear ZIP bombs, caminhos como `../../arquivo`, links simbólicos perigosos e nomes que sobrescrevam arquivos do sistema. A análise deve ocorrer em storage temporário e com expiração, nunca em um diretório compartilhado sem isolamento.
+
+#pagebreak()
+= Anexo E — Empacotamento e exportação
+
+A exportação é feita no navegador para manter o MVP simples e reduzir a necessidade de storage. O conteúdo atual do editor é transformado em bytes, anexos são convertidos em entradas e `fflate` gera um ZIP. O PDF é montado com `jsPDF` a partir do texto e de metadados básicos.
+
+== Estrutura do ZIP
+
+```text
+maklayn-project/
+├── README.md
+├── maklayn-analysis.md
+├── src/
+│   └── current-code.txt
+└── attachments/
+    ├── documento-1.ext
+    └── projeto.zip
+```
+
+O README gerado deve explicar o objetivo do pacote, a data da exportação, o arquivo principal, limitações da análise e comandos sugeridos. O relatório não deve afirmar que dependências foram instaladas ou que testes passaram apenas porque o ZIP foi criado.
+
+== Nomes e colisões
+
+Arquivos com o mesmo nome precisam ser desambiguados. Uma política simples é preservar o nome original e acrescentar um sufixo incremental: `arquivo (2).pdf`. Caminhos de ZIP devem ser normalizados para impedir traversal. A exportação deve rejeitar bytes acima do limite do navegador e avisar antes de gerar um pacote muito grande.
+
+== Evolução para storage
+
+Em produção, a exportação deve ser feita por tarefa assíncrona quando houver muitos arquivos. O frontend enviaria referências de storage, não bytes inteiros. Uma fila criaria o pacote, gravaria o resultado com URL assinada e expirável e notificaria o usuário. O banco armazenaria nome, tamanho, hash, status, proprietário, prazo de retenção e vínculo com o projeto.
+
+#pagebreak()
+= Anexo F — Modelo de dados e persistência
+
+O schema inicial preserva usuários do starter e deixa a porta aberta para entidades de domínio. Uma versão completa pode adotar as tabelas abaixo.
+
+#table(
+  columns: (1.5fr, 2.3fr, 2.7fr),
+  inset: 6pt,
+  stroke: 0.4pt + luma(190),
+  table.header([Tabela], [Campos principais], [Relações]),
+  [projects], [id, ownerId, title, status, createdAt], [um usuário possui muitos projetos],
+  [conversations], [id, projectId, title, mode], [uma conversa pertence a um projeto],
+  [messages], [id, conversationId, role, content, createdAt], [uma conversa possui muitas mensagens],
+  [documents], [id, projectId, storageKey, mime, size, hash], [um projeto possui anexos],
+  [sources], [id, projectId, url, title, verifiedAt], [fontes rastreáveis por projeto],
+  [jobs], [id, projectId, kind, status, progress, error], [análise e exportação assíncronas],
+  [auditEvents], [id, actorId, action, target, createdAt], [trilha de auditoria],
+)
+
+Todas as queries devem filtrar pelo proprietário ou por uma regra explícita de compartilhamento. IDs públicos não substituem autorização. O servidor deve impedir que um usuário altere `ownerId`, leia `storageKey` de outro usuário ou descubra a existência de projetos por diferenças de tempo de resposta.
+
+== Migrações
+
+Migrações devem ser aditivas sempre que possível: criar tabela, criar índice, preencher dados compatíveis e só depois remover campos antigos. Cada migração precisa de nome determinístico, revisão por pares e teste em banco vazio e banco já populado. Em deploy, duas versões do servidor podem coexistir durante a troca; por isso, mudanças incompatíveis exigem período de compatibilidade.
+
+#pagebreak()
+= Anexo G — Modelo de segurança
+
+A segurança da Maklayn possui quatro fronteiras: navegador, API, modelo e infraestrutura. O navegador é ambiente não confiável; qualquer valor enviado pelo cliente pode ser alterado. A API deve validar tudo novamente. O modelo é um componente probabilístico; sua saída precisa ser tratada como texto não confiável. A infraestrutura deve limitar o impacto de arquivos e tarefas demoradas.
+
+== Riscos principais
+
+#table(
+  columns: (1.8fr, 2.8fr, 2.4fr),
+  inset: 6pt,
+  stroke: 0.4pt + luma(190),
+  table.header([Risco], [Exemplo], [Mitigação]),
+  [prompt injection], [Documento tenta fazer o agente ignorar regras.], [delimitar dados, manter instruções fora do documento, revisão],
+  [segredo exposto], [Token aparece em código anexado.], [redação, alerta, não persistir, revogar],
+  [ZIP malicioso], [entrada com caminho traversal ou expansão extrema.], [normalização, limites, sandbox],
+  [abuso de API], [muitos pedidos custosos.], [rate limit, quotas, filas],
+  [acesso indevido], [ID de projeto de outro usuário.], [autorização por query e ownership],
+  [XSS], [resposta contém HTML perigoso.], [Markdown sanitizado e CSP],
+)
+
+A proteção não deve ser feita apenas no prompt. Prompt é uma camada de orientação; autenticação, autorização, validação, limites de recurso e sanitização precisam existir no código. Logs devem evitar conteúdo completo de documentos, tokens, cookies e prompts que possam conter dados pessoais.
+
+== Privacidade
+
+O usuário precisa saber o que é armazenado, por quanto tempo e como excluir. Para LGPD, o produto deve separar dados necessários para operar de dados opcionais para melhorar a experiência. Exportação deve produzir uma cópia legível; exclusão deve remover registros, objetos e índices derivados conforme a política de retenção.
+
+#pagebreak()
+= Anexo H — Estratégia de testes
+
+O projeto possui testes Vitest para partes do starter e scripts de verificação de tipos e build. A evolução deve organizar testes em camadas.
+
+== Camadas
+
+- *Unitários:* funções de chunking, normalização de caminhos, escolha de extensão, construção de prompts e cálculo de progresso.
+- *Contrato:* inputs inválidos devem gerar erro previsível; respostas devem seguir o shape esperado.
+- *Integração:* router tRPC com contexto autenticado, fallback do LLM e autorização por usuário.
+- *Componente:* CodeLab deve adicionar arquivo, abrir ZIP, mostrar progresso e exportar.
+- *End-to-end:* login, nova conversa, assistência de código, anexos e exportação em navegador.
+- *Segurança:* traversal, ZIP bomb, XSS, rate limit, cookie e acesso entre usuários.
+- *Build:* instalação limpa, `pnpm check`, `pnpm test`, `pnpm build` e readiness.
+
+== Casos de borda
+
+O conjunto de testes deve cobrir arquivo vazio, arquivo sem extensão, nome Unicode, arquivo maior que o limite, ZIP vazio, ZIP aninhado, entrada binária, falha parcial de agente, timeout do modelo, resposta vazia, prompt sem contexto, múltiplos cliques, refresh durante exportação e ausência de credencial externa.
+
+== Critério de entrega de código
+
+Um código pode ser considerado pronto para o usuário quando possui objetivo claro, dependências declaradas, instrução de execução, tratamento de erro, teste ou roteiro de validação e aviso explícito sobre o que não foi executado. “Funcional” deve significar que a solução é coerente e reproduzível, não que o sistema a executou automaticamente.
+
+#pagebreak()
+= Anexo I — Build, deploy e ambientes
+
+O desenvolvimento usa `tsx watch` para executar TypeScript e Vite para servir o frontend. O build de produção separa responsabilidades: Vite compila o cliente e esbuild empacota o entrypoint do servidor. O `Dockerfile` instala dependências, gera os artefatos e inicia o processo de produção respeitando `PORT`.
+
+== Ambientes
+
+O ambiente local é adequado para desenvolvimento e testes rápidos. O Preview é um ambiente de validação visual e integração com o runtime WebDev. Produção precisa de banco, storage, variáveis de serviço, logs, health check e política de escala. O mesmo código não deve presumir que arquivos escritos no container sejam duráveis.
+
+== Health check
+
+`GET /api/health` deve responder sem autenticação com status 2xx quando o processo está pronto para receber tráfego. O endpoint não deve expor segredos, strings de conexão ou estado interno detalhado. Um health check de liveness pode confirmar apenas que o processo está vivo; readiness pode verificar dependências críticas com timeout curto.
+
+== CI sugerida
+
+```text
+checkout
+  -> pnpm install --frozen-lockfile
+  -> pnpm check
+  -> pnpm test --run
+  -> pnpm build
+  -> imagem/container
+  -> smoke test /api/health
+  -> publicação condicionada
+```
+
+A CI deve falhar se houver segredo versionado, lockfile inconsistente, erro de tipo, teste quebrado ou build incompleto. A publicação deve ser separada da criação do artefato para permitir revisão antes do deploy.
+
+#pagebreak()
+= Anexo J — Observabilidade e operação
+
+Uma plataforma de IA precisa explicar não apenas erros de software, mas também estados de modelo, fila e serviço externo. Cada chamada pode receber um `requestId`, `projectId` anonimizado e `operation`, sem registrar o conteúdo integral. Métricas úteis incluem latência, taxa de erro, tokens, tamanho de input, tamanho de output, falhas por agente, tempo de análise por chunk e exportações concluídas.
+
+== Logs estruturados
+
+Um log operacional deve ser legível por máquina:
+
+```json
+{
+  "event": "ai.code_assist.completed",
+  "operation": "review",
+  "durationMs": 1840,
+  "agents": 2,
+  "partialFailure": false
+}
+```
+
+Não deve conter token, cookie, conteúdo sensível ou o documento inteiro. Para depuração, o sistema pode guardar um hash e uma referência temporária, sujeita à política de retenção.
+
+== Estados de job
+
+Análise e exportação grandes devem usar `queued`, `running`, `partial`, `completed`, `failed` e `cancelled`. O progresso precisa ser monotônico e nunca ultrapassar 100%. O usuário deve poder cancelar tarefas pendentes; o servidor deve ignorar resultados tardios de uma tarefa cancelada.
+
+== Incidentes
+
+Um playbook mínimo deve identificar impacto, congelar publicação, verificar health check, observar taxa de erro, desabilitar feature flag problemática, preservar evidências sem dados pessoais e comunicar o status. Depois, deve registrar causa raiz, correção e ação preventiva.
+
+#pagebreak()
+= Anexo K — Mapa de módulos da interface
+
+A interface é organizada por intenção de uso, não por tecnologia interna.
+
+#table(
+  columns: (1.3fr, 2.6fr, 2.8fr),
+  inset: 6pt,
+  stroke: 0.4pt + luma(190),
+  table.header([Módulo], [Uso], [Elementos técnicos]),
+  [Visão geral], [Retomar tarefas e ver projetos.], [cards, navegação, estado local],
+  [Chat], [Perguntar, explicar, resumir e salvar.], [mutation tRPC, streamdown, toasts],
+  [Pesquisa], [Organizar fontes e hipóteses.], [cards de referência, filtros, estado demonstrativo],
+  [Arena], [Comparar respostas e avaliar.], [dois modelos, critérios, score local],
+  [Código], [Construir e revisar software.], [CodeLab, editor, árvore, terminal visual],
+  [ENEM], [Estudar e revisar redação.], [trilhas, questões, competências],
+  [Projetos], [Acompanhar espaços de trabalho.], [lista, favoritos, tags e ações],
+)
+
+A escolha de módulos permite que o mesmo backend de IA seja reaproveitado com prompts e interfaces diferentes. Pesquisa e ENEM podem evoluir para ferramentas especializadas sem duplicar autenticação, feedback ou exportação.
+
+== Acessibilidade
+
+O MVP utiliza elementos semânticos, rótulos `aria-label`, foco visível, navegação por teclado, contraste de superfícies e responsividade. A próxima auditoria deve verificar ordem de foco, leitura por screen reader, tamanho de alvo, mensagens de erro associadas a campos e equivalência entre mouse, teclado e toque.
+
+#pagebreak()
+= Anexo L — Glossário técnico
+
+*API:* interface de programação usada para comunicação entre partes do sistema.
+
+*Backend:* código executado no servidor, responsável por autenticação, regras, chamadas ao LLM e persistência.
+
+*Chunk:* trecho menor de um arquivo grande usado para análise incremental.
+
+*Drizzle:* ORM usado para definir schema e migrações de banco em TypeScript.
+
+*Fallback:* comportamento alternativo usado quando um serviço principal falha ou não está disponível.
+
+*LLM:* modelo de linguagem de grande porte usado para gerar e revisar texto ou código.
+
+*MVP:* versão mínima viável, suficiente para demonstrar fluxos centrais sem afirmar que toda infraestrutura de produção está pronta.
+
+*RAG:* recuperação de documentos relevantes antes da geração de uma resposta.
+
+*React:* biblioteca usada para construir a interface por componentes.
+
+*tRPC:* camada que permite chamar procedimentos tipados entre cliente e servidor.
+
+*Sandbox:* ambiente isolado para executar código com limites e sem acesso indevido ao sistema.
+
+*ZIP traversal:* ataque em que o nome de uma entrada tenta escapar da pasta de extração com `../`.
+
+= Encerramento técnico ampliado
+
+A Maklayn combina uma interface de trabalho, uma API tipada e um fluxo de IA que privilegia contexto e revisão. O projeto já demonstra uma base coerente para evoluir, mas a documentação mantém uma separação honesta entre geração e execução, entre arquivo preservado e arquivo interpretado, e entre protótipo local e serviço de produção.
+
+A principal decisão arquitetural foi deixar as fronteiras explícitas. O frontend pode oferecer uma experiência rápida; o backend pode controlar credenciais e regras; o LLM pode sugerir soluções; os agentes podem revisar uns aos outros; e uma futura infraestrutura pode executar, persistir e observar as tarefas com segurança. Essa composição permite que o produto cresça sem transformar cada nova funcionalidade em uma exceção.
+
+O criador registrado permanece *Jhon Maklayn Mozer dos Santos*, e a data de início declarada permanece *12/09/2026*.

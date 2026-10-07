@@ -131,7 +131,7 @@ function moduleFromPath(pathname: string): ModuleId {
 function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`brand-lockup ${compact ? "brand-lockup-compact" : ""}`}>
-      <div className="brand-mark" aria-hidden="true"><span>M</span><i>/</i></div>
+      <div className="brand-mark"><img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663931230187/GcAIvexVyCBicyuH.jpeg" alt="" /></div>
       {!compact && <div><div className="brand-name">maklayn</div><div className="brand-caption">think · build · verify</div></div>}
     </div>
   );

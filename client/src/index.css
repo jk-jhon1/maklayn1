@@ -12,9 +12,9 @@
   --mk-soft: #a4a6a1;
   --mk-line: #dfded7;
   --mk-line-strong: #c7c6be;
-  --mk-coral: #f2643d;
-  --mk-coral-dark: #d64b2c;
-  --mk-coral-soft: #fde4dc;
+  --mk-coral: #c8bfaf;
+  --mk-coral-dark: #aaa08e;
+  --mk-coral-soft: #f1ede5;
   --mk-cyan: #3ea3a3;
   --mk-cyan-soft: #dff1ed;
   --mk-yellow: #e2ad35;
@@ -36,7 +36,9 @@
   --mk-soft: #858983;
   --mk-line: #383c37;
   --mk-line-strong: #51564f;
-  --mk-coral-soft: #482c24;
+  --mk-coral: #a6aaa5;
+  --mk-coral-dark: #858a85;
+  --mk-coral-soft: #343735;
   --mk-cyan-soft: #233b3a;
   --mk-yellow-soft: #433a21;
   --mk-purple-soft: #322b42;
@@ -58,7 +60,7 @@ a { color: inherit; text-decoration: none; }
 .sidebar-topline { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 0 4px 22px 8px; }
 .brand-lockup { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .brand-lockup-compact { justify-content: center; width: 100%; }
-.brand-mark { width: 34px; height: 34px; position: relative; overflow: hidden; display: grid; place-items: center; background: #15232b; border: 1px solid #b18a3c; border-radius: 8px 8px 8px 2px; box-shadow: 4px 4px 0 rgba(177,138,60,.18); }
+.brand-mark { width: 34px; height: 34px; position: relative; overflow: hidden; display: grid; place-items: center; background: #15232b; border: 1px solid var(--mk-coral); border-radius: 8px 8px 8px 2px; box-shadow: 4px 4px 0 color-mix(in srgb, var(--mk-coral) 18%, transparent); }
 .brand-mark img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: 50% 35%; }
 .brand-lockup-compact .brand-mark { width: 42px; height: 42px; border-radius: 10px; }
 .brand-name { font-family: Georgia, "Times New Roman", serif; font-size: 20px; line-height: 1; letter-spacing: -.8px; font-weight: 700; }
@@ -211,3 +213,5 @@ a { color: inherit; text-decoration: none; }
 .file-ingest { grid-column: 1 / -1; display: flex; align-items: center; gap: 9px; min-width: 0; }.file-picker { position: relative; display: inline-flex; align-items: center; padding: 7px 9px; border: 1px dashed color-mix(in srgb, var(--mk-coral) 42%, var(--mk-line)); border-radius: 7px; color: var(--mk-coral); background: var(--mk-surface); font-size: 10px; font-weight: 700; cursor: pointer; }.file-picker input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }.file-progress { min-width: 0; overflow: hidden; color: var(--mk-muted); font-family: var(--mk-mono); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 760px) { .file-ingest { align-items: stretch; flex-direction: column; }.file-picker { justify-content: center; } }
 .attachment-count { display: inline-flex; align-items: center; gap: 4px; color: var(--mk-green); font-family: var(--mk-mono); font-size: 9px; white-space: nowrap; }
+/* Acento Maklayn: creme no claro, cinza no escuro. */
+.login-button, .primary-small, .send-button, .research-search button, .primary-action, .score-buttons button.selected, .profile-avatar, .message-avatar { color: var(--mk-ink); }

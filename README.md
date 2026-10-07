@@ -38,7 +38,7 @@ Os procedimentos `ai.chat`, `ai.codeAssist` e `ai.analyzeFileChunk` chamam `invo
 
 ## Documentos e exportação
 
-No CodeLab é possível escrever código ou Markdown no editor, anexar documentos e ZIPs, analisar os anexos por partes e incluí-los no pacote do projeto. O botão **PDF** gera um documento baixável com o conteúdo atual ou o relatório da Maklayn. O botão **ZIP** cria `maklayn-project.zip` com o código atual, README, análise e anexos originais. Os anexos ficam na sessão do navegador até serem exportados; para persistência entre dispositivos, ainda falta conectar storage privado.
+No CodeLab é possível escrever código ou Markdown no editor, anexar **qualquer formato de arquivo** pelo campo universal, selecionar vários documentos de uma vez e incluir tudo no pacote do projeto. Arquivos legíveis podem ser analisados por partes; formatos binários são preservados para download/exportação mesmo quando não há parser de conteúdo. O botão **PDF** gera um documento baixável com o conteúdo atual ou o relatório da Maklayn. O botão **ZIP** cria `maklayn-project.zip` com o código atual, README, análise e anexos originais. Os anexos ficam na sessão do navegador até serem exportados; para persistência entre dispositivos, ainda falta conectar storage privado.
 
 ## Segurança e limites do MVP
 
